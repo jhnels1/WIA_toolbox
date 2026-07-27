@@ -40,7 +40,7 @@ def get_RQs( t_data, p_data, q_data ):
                     "t_SBP":pulse.t_SBP,
                     "t_DN":pulse.t_DN,
                     "t_WImax":pulse.t_WImax,
-                    "t_postWImax":pulse.t_postWImax,
+                    "t_postWImax":pulse.t_postWIpeak,
                     "WI_factor":pulse.WI_factor,
                     "WI_peak_pre":pulse.WI_peak_pre,
                     "WI_mean_pre":pulse.WI_mean_pre,
@@ -52,4 +52,5 @@ def get_RQs( t_data, p_data, q_data ):
                     "coher":pulse.coher,
                     "t_off":pulse.t_off
                 }
+        pulse_list.append(RQ_entry)
     return pd.DataFrame(pulse_list)
