@@ -14,6 +14,7 @@ class Pulse:
         self.q0=q0
         self.q1=q1
         self.q2=q2
+        self.WI = p1*q1
         self.fs=fs
 
         self.MAP = np.mean(p0)
@@ -24,6 +25,60 @@ class Pulse:
         self.PI = (np.amax(q0)-np.amin(q0))/np.mean(q0)
         self.RR = np.amax(t)-np.amin(t)
         self.t0 = np.amin(t)
+
+    def segment_pulse(self):
+        self.t_SBP = self.t[np.argmax(self.p0)]
+        DN_range = (self.t>self.t_SBP)&(self.t<0.95*self.RR+self.t0)
+        if np.sum(DN_range)==0:
+            self.t_DN = np.nan
+        else:
+            self.t_DN = self.t[DN_range][np.argmax(self.p2[DN_range])]
+
+        self.t_WImax = self.t[np.argmax(self.WI)]
+        self.p0_WImax = self.p0[np.argmax(self.WI)]
+        self.p1_WImax = self.p1[np.argmax(self.WI)]
+        self.q0_WImax = self.q0[np.argmax(self.WI)]
+        self.q1_WImax = self.q1[np.argmax(self.WI)]
+
+        # Get minimum after WI peak
+        post_WImax = self.t>self.t_WImax
+        WI_grad = np.gradient( self.WI )
+        WI_flat_bool = np.abs( WI_grad )<0.05*np.amax(WI_grad)
+        if np.sum(post_WImax&WI_flat_bool)==0:
+            self.t_postWIpeak = np.nan
+        else:
+            self.t_postWIpeak = self.t[ post_WImax&WI_flat_bool ][0]
+
+        #self.teff_mid = 0.5*( self.t_WImax + self.t_DN )
+
+        self.WI_factor = self.p1_WImax/self.q1_WImax
+        self.WI_fore = (1./4/self.WI_factor)*( self.p1 + self.WI_factor*self.q1 )**2
+        self.WI_back = -(1./4/self.WI_factor)*( self.p1 - self.WI_factor*self.q1 )**2
+
+        pre_range = self.t<t_postWIpeak
+        mid_range = (self.t>=postWIpeak)&(self.t<t_DN)
+        post_range = self.t>=t_DN
+
+        self.WI_peak_pre = np.amax( self.WI[pre_range] )
+        self.WI_mean_pre = np.mean( self.WI[pre_range] )
+        
+        self.WI_peak_mid = np.amax( self.WI[mid_range] )
+        self.WI_mean_mid = np.mean( self.WI[mid_range] )
+        
+        self.WI_peak_post = np.amax( self.WI[post_range] )
+        self.WI_mean_post = np.mean( self.WI[post_range] )
+
+        self.WI_mean_all
+
+        #self.dP_fore = 0.5*(self.p1+self.WI_factor*self.q1)
+        #self.dP_back = 0.5*(self.p1-self.WI_factor*self.q1)
+
+        #self.P_fore = self.p0[0] + np.array([ np.trapz( self.dP_fore[:i], self.t[:i] ) for i in range(len(self.t)) ])
+        #self.P_back = self.p0[0] + np.array([ np.trapz( self.dP_back[:i], self.t[:i] ) for i in range(len(self.t)) ])
+
+        #self.is_rise = self.t<=self.t_SBP
+        #self.is_mid = (self.t>self.t_SBP)&(self.t<=self.t_DN)
+        #self.is_fall = self.t>self.t_DN
 
 class Experiment:
 
@@ -147,6 +202,7 @@ class Experiment:
         pulse_list = list()
         for i, slice_bool in enumerate(self.slice_bools):
             offset = self.slice_offsets[i]
+            coher = self.slice_coher[i]
 
             q0_shift = np.roll( self.q0, offset )
             q1_shift = np.roll( self.q1, offset )
@@ -166,6 +222,12 @@ class Experiment:
                                 q1_shift[pulse_range], 
                                 q2_shift[pulse_range] 
                         )
+                this_pulse.segment_pulse()
+
+                # Maybe playing with fire here, but we ball
+                this_pulse.t_off = offset/self.fs
+                this_pulse.coher = coher
+
                 pulse_list.append(this_pulse)
 
         self.pulses = pulse_list
