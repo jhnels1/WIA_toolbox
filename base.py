@@ -55,20 +55,32 @@ class Pulse:
         self.WI_fore = (1./4/self.WI_factor)*( self.p1 + self.WI_factor*self.q1 )**2
         self.WI_back = -(1./4/self.WI_factor)*( self.p1 - self.WI_factor*self.q1 )**2
 
-        pre_range = self.t<t_postWIpeak
-        mid_range = (self.t>=postWIpeak)&(self.t<t_DN)
-        post_range = self.t>=t_DN
+        pre_range = self.t<self.t_postWIpeak
+        mid_range = (self.t>=self.t_postWIpeak)&(self.t<self.t_DN)
+        post_range = self.t>=self.t_DN
 
-        self.WI_peak_pre = np.amax( self.WI[pre_range] )
-        self.WI_mean_pre = np.mean( self.WI[pre_range] )
+        if np.sum(pre_range)==0:
+            self.WI_peak_pre = np.nan
+            self.WI_mean_pre = np.nan
+        else:
+            self.WI_peak_pre = np.amax( self.WI[pre_range] )
+            self.WI_mean_pre = np.mean( self.WI[pre_range] )
         
-        self.WI_peak_mid = np.amax( self.WI[mid_range] )
-        self.WI_mean_mid = np.mean( self.WI[mid_range] )
+        if np.sum(mid_range)==0:
+            self.WI_peak_mid = np.nan
+            self.WI_mean_mid = np.nan
+        else:
+            self.WI_peak_mid = np.amax( self.WI[mid_range] )
+            self.WI_mean_mid = np.mean( self.WI[mid_range] )
         
-        self.WI_peak_post = np.amax( self.WI[post_range] )
-        self.WI_mean_post = np.mean( self.WI[post_range] )
+        if np.sum(post_range)==0:
+            self.WI_peak_post = np.nan
+            self.WI_mean_post = np.nan
+        else:
+            self.WI_peak_post = np.amax( self.WI[post_range] )
+            self.WI_mean_post = np.mean( self.WI[post_range] )
 
-        self.WI_mean_all
+        self.WI_mean_all = np.mean(self.WI)
 
         #self.dP_fore = 0.5*(self.p1+self.WI_factor*self.q1)
         #self.dP_back = 0.5*(self.p1-self.WI_factor*self.q1)
