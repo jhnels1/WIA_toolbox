@@ -3,7 +3,7 @@ import pandas as pd
 
 import utils
 
-from scipy.signal import welch, savgol_filter, find_peaks, csd, coherence
+from scipy.signal import welch, savgol_filter, find_peaks, csd, coherence, correlate, correlation_lags
 
 class Pulse:
     def __init__(self, t, p0, p1, p2, q0, q1, q2, fs=1000):
@@ -227,10 +227,24 @@ class Experiment:
             onsets_inrange = self.pulse_onsets[(self.pulse_onsets>=np.amin(self.t_data[slice_bool]))&(self.pulse_onsets<np.amax(self.t_data[slice_bool]))]
 
             for j in range( len(onsets_inrange)-1 ):
+                # Defines pressure pulse
                 pulse_range = (self.t_data>=onsets_inrange[j])&(self.t_data<onsets_inrange[j+1])
+                
+                # Extend the initial range to search for optimal offset between pressure and flow
+                extend_delta = 0.1 # seconds
+                extend_samps = int(extend_delta*self.fs)
+                
+                extend_range = (self.t_data>=onsets_inrange[j]-extend_delta)&(self.t_data<onsets_inrange[j+1]+extend_delta)
+                
+                # Optimal offset maximizes WI (maybe we can even prove that someday!)
+                cor_grid = correlate( self.p1[pulse_range], self.q1[extend_range], mode='valid' )
+                lag_grid = correlation_lags( np.sum(pulse_range), np.sum(extend_range), mode='valid' )
+                
+                offset = lag_grid[np.argmax(cor_grid)]+extend_samps # Note added term. Lags are weird for unequal lenght arrays
 
-                offset = utils.get_offset_dA( self.p0, self.q0, pulse_range )
 
+                #offset = utils.get_offset_dA( self.p0, self.q0, pulse_range )
+                                
                 q0_shift = np.roll( self.q0, offset )
                 q1_shift = np.roll( self.q1, offset )
                 q2_shift = np.roll( self.q2, offset ) 
