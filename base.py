@@ -127,6 +127,10 @@ class Experiment:
             
             # This defines the slice 
             slice_bool = (self.t_data>=window_edges[i])&(self.t_data<window_edges[i+1])
+            
+            # Dont save the slice if there's nothing there
+            if np.sum(slice_bool)==0:
+                continue
             slice_bool_list.append( slice_bool )
             
             # Count how many samples (rather livetime) are actually in the slice, for later QC
