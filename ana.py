@@ -13,7 +13,7 @@ def get_RQs( t_data, p_data, q_data ):
     my_experiment.get_slice_bools()
 
     # 2) Calculate offset between pressure and flow slices
-    my_experiment.offset_proc()
+    #my_experiment.offset_proc()
 
     # 3) Calculate coherence between pressure and flow
     my_experiment.coher_proc()

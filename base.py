@@ -217,18 +217,24 @@ class Experiment:
     def get_pulses(self):
         pulse_list = list()
         for i, slice_bool in enumerate(self.slice_bools):
-            offset = self.slice_offsets[i]
+            #offset = self.slice_offsets[i]
             coher = self.slice_coher[i]
 
-            q0_shift = np.roll( self.q0, offset )
-            q1_shift = np.roll( self.q1, offset )
-            q2_shift = np.roll( self.q2, offset ) 
+            #q0_shift = np.roll( self.q0, offset )
+            #q1_shift = np.roll( self.q1, offset )
+            #q2_shift = np.roll( self.q2, offset ) 
 
             onsets_inrange = self.pulse_onsets[(self.pulse_onsets>=np.amin(self.t_data[slice_bool]))&(self.pulse_onsets<np.amax(self.t_data[slice_bool]))]
 
             for j in range( len(onsets_inrange)-1 ):
                 pulse_range = (self.t_data>=onsets_inrange[j])&(self.t_data<onsets_inrange[j+1])
 
+                offset = utils.get_offset_dA( self.p0, self.q0, pulse_range )
+
+                q0_shift = np.roll( self.q0, offset )
+                q1_shift = np.roll( self.q1, offset )
+                q2_shift = np.roll( self.q2, offset ) 
+                
                 this_pulse = Pulse(
                                 self.t_data[pulse_range],
                                 self.p0[pulse_range],
