@@ -54,4 +54,4 @@ def get_RQs( t_data, p_data, q_data ):
                     "block_number":pulse.block_number
                 }
         pulse_list.append(RQ_entry)
-    return pd.DataFrame(pulse_list)
+    return pd.DataFrame(pulse_list), my_experiment.pulses
