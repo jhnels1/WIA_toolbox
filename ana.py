@@ -50,7 +50,8 @@ def get_RQs( t_data, p_data, q_data ):
                     "WI_mean_post":pulse.WI_mean_post,
                     "WI_mean_all":pulse.WI_mean_all,
                     "coher":pulse.coher,
-                    "t_off":pulse.t_off
+                    "t_off":pulse.t_off,
+                    "block_number":pulse.block_number
                 }
         pulse_list.append(RQ_entry)
     return pd.DataFrame(pulse_list)

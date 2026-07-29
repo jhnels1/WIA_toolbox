@@ -263,6 +263,7 @@ class Experiment:
                 # Maybe playing with fire here, but we ball
                 this_pulse.t_off = offset/self.fs
                 this_pulse.coher = coher
+                this_pulse.block_number = i
 
                 pulse_list.append(this_pulse)
 
