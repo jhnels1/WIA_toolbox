@@ -6,7 +6,7 @@ import utils
 from scipy.signal import welch, savgol_filter, find_peaks, csd, coherence, correlate, correlation_lags
 
 class Pulse:
-    def __init__(self, t, p0, p1, p2, q0, q1, q2, WI_factor fs=1000):
+    def __init__(self, t, p0, p1, p2, q0, q1, q2, WI_factor, fs=1000):
         self.t=t
         self.p0=p0
         self.p1=p1
