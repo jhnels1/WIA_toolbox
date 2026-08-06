@@ -245,7 +245,7 @@ class Experiment:
                 # Get fine offset by making systolic onset 'most linear' - equivalent to minimizing reflected wave
                 fine_grid = np.arange(-10, 10) # +/- 10 ms
 
-                t_max = self.t_data[ np.argmax( np.roll( self.q0, coarse_off )[pulse_range]) ]
+                t_max = self.t_data[pulse_range][ np.argmax( np.roll( self.q0, coarse_off )[pulse_range]) ]
                 t_min = np.amin(self.t_data[pulse_range])
                 delta = t_max-t_min
                 lin_start = t_min + 0.1*delta
