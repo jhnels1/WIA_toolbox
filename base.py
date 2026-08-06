@@ -6,7 +6,7 @@ import utils
 from scipy.signal import welch, savgol_filter, find_peaks, csd, coherence, correlate, correlation_lags
 
 class Pulse:
-    def __init__(self, t, p0, p1, p2, q0, q1, q2, fs=1000):
+    def __init__(self, t, p0, p1, p2, q0, q1, q2, WI_factor fs=1000):
         self.t=t
         self.p0=p0
         self.p1=p1
@@ -14,6 +14,7 @@ class Pulse:
         self.q0=q0
         self.q1=q1
         self.q2=q2
+        self.WI_factor = WI_factor
         self.WI = p1*q1
         self.fs=fs
 
@@ -283,12 +284,12 @@ class Experiment:
                                 self.p2[pulse_range],
                                 q0_shift[pulse_range], 
                                 q1_shift[pulse_range], 
-                                q2_shift[pulse_range] 
+                                q2_shift[pulse_range],
+                                WI_factor
                         )
                 this_pulse.segment_pulse()
 
                 # Maybe playing with fire here, but we ball
-                this_pulse.WI_factor = WI_factor
                 this_pulse.t_off = offset/self.fs
                 this_pulse.coher = coher
                 this_pulse.block_number = i
