@@ -253,6 +253,9 @@ class Experiment:
 
                 lin_range = (self.t_data>=lin_start)&(self.t_data<=lin_stop)
 
+                if np.sum(lin_range)==0:
+                    continue
+
                 dA_grid = np.zeros(len(fine_grid))
                 for k, some_off in enumerate(fine_grid):
                     q_grid = np.roll( self.q0, coarse_off+some_off )[lin_range]
