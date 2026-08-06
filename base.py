@@ -106,13 +106,13 @@ class Experiment:
         self.slice_len = slice_len
 
         # also store filters+derivatives of pressure and flow
-        self.p0 = savgol_filter(self.p_data, int(50e-3*fs)+1, 3, deriv=0, delta=1./fs)
-        self.p1 = savgol_filter(self.p_data, int(50e-3*fs)+1, 3, deriv=1, delta=1./fs)
-        self.p2 = savgol_filter(self.p_data, int(50e-3*fs)+1, 3, deriv=2, delta=1./fs)
+        self.p0 = savgol_filter(self.p_data, int(70e-3*fs)+1, 3, deriv=0, delta=1./fs)
+        self.p1 = savgol_filter(self.p_data, int(70e-3*fs)+1, 3, deriv=1, delta=1./fs)
+        self.p2 = savgol_filter(self.p_data, int(70e-3*fs)+1, 3, deriv=2, delta=1./fs)
 
-        self.q0 = savgol_filter(self.q_data, int(50e-3*fs)+1, 3, deriv=0, delta=1./fs)
-        self.q1 = savgol_filter(self.q_data, int(50e-3*fs)+1, 3, deriv=1, delta=1./fs)
-        self.q2 = savgol_filter(self.q_data, int(50e-3*fs)+1, 3, deriv=2, delta=1./fs)
+        self.q0 = savgol_filter(self.q_data, int(70e-3*fs)+1, 3, deriv=0, delta=1./fs)
+        self.q1 = savgol_filter(self.q_data, int(70e-3*fs)+1, 3, deriv=1, delta=1./fs)
+        self.q2 = savgol_filter(self.q_data, int(70e-3*fs)+1, 3, deriv=2, delta=1./fs)
 
 
     def get_slice_bools(self):
