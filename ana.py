@@ -49,6 +49,8 @@ def get_RQs( t_data, p_data, q_data ):
                     "WI_peak_post":pulse.WI_peak_post,
                     "WI_mean_post":pulse.WI_mean_post,
                     "WI_mean_all":pulse.WI_mean_all,
+                    "WI_mean_fore":pulse.WI_mean_fore,
+                    "WI_mean_back":pulse.WI_mean_back,
                     "coher":pulse.coher,
                     "t_off":pulse.t_off,
                     "block_number":pulse.block_number

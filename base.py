@@ -21,7 +21,7 @@ class Pulse:
         self.PP = np.amax(p0)-p0[0]
         self.MAQ = np.mean(q0)
         self.PQ = np.amax(q0)-q0[0]
-        self.RI = self.PQ/np.amax(q0[0])
+        self.RI = self.PQ/np.amax(q0)
         self.PI = (np.amax(q0)-np.amin(q0))/np.mean(q0)
         self.RR = np.amax(t)-np.amin(t)
         self.t0 = np.amin(t)
@@ -51,7 +51,7 @@ class Pulse:
 
         #self.teff_mid = 0.5*( self.t_WImax + self.t_DN )
 
-        self.WI_factor = self.p1_WImax/self.q1_WImax
+        #self.WI_factor = self.p1_WImax/self.q1_WImax
         self.WI_fore = (1./4/self.WI_factor)*( self.p1 + self.WI_factor*self.q1 )**2
         self.WI_back = -(1./4/self.WI_factor)*( self.p1 - self.WI_factor*self.q1 )**2
 
@@ -81,6 +81,8 @@ class Pulse:
             self.WI_mean_post = np.mean( self.WI[post_range] )
 
         self.WI_mean_all = np.mean(self.WI)
+        self.WI_mean_fore = np.mean(self.WI_fore)
+        self.WI_mean_back = np.mean(self.WI_back)
 
         #self.dP_fore = 0.5*(self.p1+self.WI_factor*self.q1)
         #self.dP_back = 0.5*(self.p1-self.WI_factor*self.q1)
@@ -217,12 +219,7 @@ class Experiment:
     def get_pulses(self):
         pulse_list = list()
         for i, slice_bool in enumerate(self.slice_bools):
-            #offset = self.slice_offsets[i]
             coher = self.slice_coher[i]
-
-            #q0_shift = np.roll( self.q0, offset )
-            #q1_shift = np.roll( self.q1, offset )
-            #q2_shift = np.roll( self.q2, offset ) 
 
             onsets_inrange = self.pulse_onsets[(self.pulse_onsets>=np.amin(self.t_data[slice_bool]))&(self.pulse_onsets<np.amax(self.t_data[slice_bool]))]
 
@@ -240,7 +237,7 @@ class Experiment:
                 cor_grid = correlate( self.p1[pulse_range], self.q1[extend_range], mode='valid' )
                 lag_grid = correlation_lags( np.sum(pulse_range), np.sum(extend_range), mode='valid' )
                 
-                coarse_off = lag_grid[np.argmax(cor_grid)]+extend_samps # Note added term. Lags are weird for unequal lenght arrays
+                coarse_off = lag_grid[np.argmax(cor_grid)]+extend_samps # Note added term. Lags are weird for unequal length arrays
 
                 # Get fine offset by making systolic onset 'most linear' - equivalent to minimizing reflected wave
                 fine_grid = np.arange(-10, 10) # +/- 10 ms
@@ -257,6 +254,7 @@ class Experiment:
                     continue
 
                 dA_grid = np.zeros(len(fine_grid))
+                m_grid = np.zeros(len(fine_grid))
                 for k, some_off in enumerate(fine_grid):
                     q_grid = np.roll( self.q0, coarse_off+some_off )[lin_range]
                     q0 = np.amin(q_grid)
@@ -268,8 +266,9 @@ class Experiment:
 
                     p_lin = m*(q_grid-q0)+p0
                     dA_grid[k] = np.trapz( np.abs( self.p0[lin_range]-p_lin ), q_grid )
-
+                    m_grid[k] = m
                 fine_off = fine_grid[np.argmin(dA_grid)]
+                WI_factor = m_grid[np.argmin(dA_grid)]
                 offset = coarse_off + fine_off
                 #offset = utils.get_offset_dA( self.p0, self.q0, pulse_range )
                                 
@@ -289,6 +288,7 @@ class Experiment:
                 this_pulse.segment_pulse()
 
                 # Maybe playing with fire here, but we ball
+                this_pulse.WI_factor = WI_factor
                 this_pulse.t_off = offset/self.fs
                 this_pulse.coher = coher
                 this_pulse.block_number = i
