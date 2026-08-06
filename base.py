@@ -236,13 +236,38 @@ class Experiment:
                 
                 extend_range = (self.t_data>=onsets_inrange[j]-extend_delta)&(self.t_data<onsets_inrange[j+1]+extend_delta)
                 
-                # Optimal offset maximizes WI (maybe we can even prove that someday!)
+                # Get coarse offset by maximizing WI
                 cor_grid = correlate( self.p1[pulse_range], self.q1[extend_range], mode='valid' )
                 lag_grid = correlation_lags( np.sum(pulse_range), np.sum(extend_range), mode='valid' )
                 
-                offset = lag_grid[np.argmax(cor_grid)]+extend_samps # Note added term. Lags are weird for unequal lenght arrays
+                coarse_off = lag_grid[np.argmax(cor_grid)]+extend_samps # Note added term. Lags are weird for unequal lenght arrays
 
+                # Get fine offset by making systolic onset 'most linear' - equivalent to minimizing reflected wave
+                fine_grid = np.arange(-10, 10) # +/- 10 ms
 
+                t_max = self.t_data[ np.argmax( np.roll( self.q0, coarse_off )[pulse_range]) ]
+                t_min = np.amin(self.t_data[pulse_range])
+                delta = t_max-t_min
+                lin_start = t_min + 0.1*delta
+                lin_stop = t_min + 0.7*delta
+
+                lin_range = (self.t_data>=lin_start)&(self.t_data<=lin_stop)
+
+                dA_grid = np.zeros(len(fine_grid))
+                for k, some_off in enumerate(fine_grid):
+                    q_grid = np.roll( self.q0, coarse_off+some_off )[lin_range]
+                    q0 = np.amin(q_grid)
+                    q1 = np.amax(q_grid)
+                    p0 = np.amin(self.p0[lin_range])
+                    p1 = np.amax(self.p0[lin_range])
+
+                    m = (p1-p0)/(q1-q0)
+
+                    p_lin = m*(q_grid-q0)+p0
+                    dA_grid[k] = np.trapz( np.abs( self.p0[lin_range]-p_lin ), q_grid )
+
+                fine_off = fine_grid[np.argmin(dA_grid)]
+                offset = coarse_off + fine_off
                 #offset = utils.get_offset_dA( self.p0, self.q0, pulse_range )
                                 
                 q0_shift = np.roll( self.q0, offset )
