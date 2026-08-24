@@ -6,11 +6,13 @@ import utils
 from scipy.signal import welch, savgol_filter, find_peaks, csd, coherence, correlate, correlation_lags
 
 class Pulse:
-    def __init__(self, t, p0, p1, p2, q0, q1, q2, WI_factor, fs=1000):
+    def __init__(self, t, p_raw, p0, p1, p2, q_raw, q0, q1, q2, WI_factor, fs=1000):
         self.t=t
+        self.p_raw = p_raw
         self.p0=p0
         self.p1=p1
         self.p2=p2
+        self.q_raw = q_raw
         self.q0=q0
         self.q1=q1
         self.q2=q2
@@ -273,15 +275,18 @@ class Experiment:
                 offset = coarse_off + fine_off
                 #offset = utils.get_offset_dA( self.p0, self.q0, pulse_range )
                                 
+                qraw_shift = np.roll( self.q_data, offset )
                 q0_shift = np.roll( self.q0, offset )
                 q1_shift = np.roll( self.q1, offset )
                 q2_shift = np.roll( self.q2, offset ) 
                 
                 this_pulse = Pulse(
                                 self.t_data[pulse_range],
+                                self.p_data[pulse_range],
                                 self.p0[pulse_range],
                                 self.p1[pulse_range],
                                 self.p2[pulse_range],
+                                qraw_shift[pulse_range],
                                 q0_shift[pulse_range], 
                                 q1_shift[pulse_range], 
                                 q2_shift[pulse_range],
