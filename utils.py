@@ -20,5 +20,3 @@ def get_offset_dA( P, Q, range_bool ):
 
 def norm_trace(data):
     return (data-np.mean(data))/np.std(data)
-
-

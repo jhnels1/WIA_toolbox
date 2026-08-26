@@ -3,6 +3,7 @@ import pandas as pd
 
 import utils
 
+from scipy.optimize import curve_fit
 from scipy.signal import welch, savgol_filter, find_peaks, csd, coherence, correlate, correlation_lags
 
 class Pulse:
@@ -96,6 +97,54 @@ class Pulse:
         #self.is_rise = self.t<=self.t_SBP
         #self.is_mid = (self.t>self.t_SBP)&(self.t<=self.t_DN)
         #self.is_fall = self.t>self.t_DN
+
+    def Pres_tDN(self, a, b):
+        P0 = self.p0[0]
+        is_sys = self.t<self.t_DN
+        t_sys = self.t[is_sys]-np.amin(self.t)
+        p_sys = self.p0[is_sys]
+        return np.exp(-(a+b)*np.amax(t_sys))*( np.trapz( a*p_sys*np.exp((a+b)*t_sys), t_sys ) + p_sys[0] )
+    
+    def decay_history( self, t, a, b ):
+        P0 = self.Pres_tDN( a, b )
+        return P0*np.exp( -b*t )
+
+    def fit_decay_history( self, dia_frac=2./3 ):
+        dia_dur = np.amax(self.t)-self.t_DN
+        dia_range = self.t>=self.t_DN
+        fit_range = self.t>=(self.t_DN+(1-dia_frac)*dia_dur)
+
+        t_fit = self.t[fit_range]-self.t_DN
+        P_fit = self.p0[fit_range]
+
+        a0 = 0.01
+        b0 = 0.1
+
+        r, rcov = curve_fit( self.decay_history, t_fit, P_fit, p0=[a0, b0] )
+
+        P_eval = self.get_Pres_all( r[0], r[1] )
+
+        #r, rcov = fit_decay( t_fit, P_fit )
+
+        #t_eval = t_data[dia_range]-t_DN
+
+        return r, rcov, P_eval
+
+    def get_Pres_all(self, a, b ):
+
+        is_sys = self.t<self.t_DN
+
+        t_sys = self.t[is_sys]-np.amin(self.t)
+        P_sys = self.p0[is_sys]
+        t_dia = self.t[~is_sys]-self.t_DN
+        P_dia = self.p0[~is_sys]
+
+        #Pres_sys = np.exp(-(a+b)*t_sys)*( a*np.cumsum(P_sys*np.exp((a+b)*t_sys))/fs + P_sys[0] )
+        Pres_sys = np.array([np.exp(-(a+b)*t_sys[i+1])*( a*np.trapz(P_sys[1:i+1]*np.exp((a+b)*t_sys[1:i+1]),t_sys[1:i+1] ) + P_sys[0] ) for i in range(len(P_sys)-1)])
+        Pres_sys = np.hstack([P_sys[0], Pres_sys])
+        Pres_dia = self.Pres_tDN(a, b)*np.exp(-b*t_dia)
+
+        return np.hstack( [Pres_sys, Pres_dia] )
 
 class Experiment:
 
