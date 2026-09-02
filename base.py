@@ -98,12 +98,6 @@ class Pulse:
         #self.is_mid = (self.t>self.t_SBP)&(self.t<=self.t_DN)
         #self.is_fall = self.t>self.t_DN
 
-    #def Pres_tDN(self, a, b):
-    #    P0 = self.p0[0]
-    #    is_sys = self.t<=self.t_DN
-    #    t_sys = self.t[is_sys]-np.amin(self.t)
-    #    p_sys = self.p0[is_sys]
-    #    return np.exp(-(a+b)*np.amax(t_sys))*( np.trapz( a*p_sys*np.exp((a+b)*t_sys), t_sys ) + p_sys[0] )
     def Pres_sys(self, t, a, b):
         P0 = self.p0[0]
         t_eval = t-np.amin(self.t)
@@ -127,13 +121,9 @@ class Pulse:
         a0 = 0.01
         b0 = 0.1
 
-        r, rcov = curve_fit( self.decay_history, t_fit, P_fit, p0=[a0, b0] )
+        r, rcov = curve_fit( self.decay_history, t_fit, P_fit, p0=[a0, b0], bounds=(0, np.inf) )
 
         P_eval = self.get_Pres_all( r[0], r[1] )
-
-        #r, rcov = fit_decay( t_fit, P_fit )
-
-        #t_eval = t_data[dia_range]-t_DN
 
         return r, rcov, P_eval
 
@@ -146,12 +136,7 @@ class Pulse:
         t_dia = self.t[~is_sys]
         P_dia = self.p0[~is_sys]
 
-        #Pres_sys = np.exp(-(a+b)*t_sys)*( a*np.cumsum(P_sys*np.exp((a+b)*t_sys))/fs + P_sys[0] )
-        #Pres_sys = np.array([np.exp(-(a+b)*t_sys[i+1])*( a*np.trapz(P_sys[1:i+1]*np.exp((a+b)*t_sys[1:i+1]),t_sys[1:i+1] ) + P_sys[0] ) for i in range(len(P_sys)-1)])
-        #Pres_sys = np.array([np.exp(-(a+b)*t_sys[i])*( a*np.trapz(P_sys[:i]*np.exp((a+b)*t_sys[:i]),t_sys[:i] ) + P_sys[0] ) for i in range(len(P_sys))])
-        #Pres_sys = np.hstack([P_sys[0], Pres_sys])
         Pres_sys_eval = np.array([self.Pres_sys( t, a, b ) for t in t_sys])
-        #Pres_dia = self.Pres_sys( self.t_DN, a, b)*np.exp(-b*t_dia)
         Pres_dia = self.decay_history( t_dia, a, b )
 
         return np.hstack( [Pres_sys_eval, Pres_dia] )
