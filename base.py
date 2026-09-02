@@ -98,23 +98,30 @@ class Pulse:
         #self.is_mid = (self.t>self.t_SBP)&(self.t<=self.t_DN)
         #self.is_fall = self.t>self.t_DN
 
-    def Pres_tDN(self, a, b):
+    #def Pres_tDN(self, a, b):
+    #    P0 = self.p0[0]
+    #    is_sys = self.t<=self.t_DN
+    #    t_sys = self.t[is_sys]-np.amin(self.t)
+    #    p_sys = self.p0[is_sys]
+    #    return np.exp(-(a+b)*np.amax(t_sys))*( np.trapz( a*p_sys*np.exp((a+b)*t_sys), t_sys ) + p_sys[0] )
+    def Pres_sys(self, t, a, b):
         P0 = self.p0[0]
-        is_sys = self.t<self.t_DN
-        t_sys = self.t[is_sys]-np.amin(self.t)
-        p_sys = self.p0[is_sys]
-        return np.exp(-(a+b)*np.amax(t_sys))*( np.trapz( a*p_sys*np.exp((a+b)*t_sys), t_sys ) + p_sys[0] )
-    
+        t_eval = t-np.amin(self.t)
+        t_int = self.t[self.t<=t] - np.amin(self.t)
+        P_int = self.p0[self.t<=t]
+        return np.exp(-(a+b)*t_eval)*( np.trapz(a*P_int*np.exp((a+b)*t_int), t_int) + P0 )
+
+
     def decay_history( self, t, a, b ):
-        P0 = self.Pres_tDN( a, b )
-        return P0*np.exp( -b*t )
+        PN = self.Pres_sys( self.t_DN, a, b )
+        return PN*np.exp( -b*(t-self.t_DN) )
 
     def fit_decay_history( self, dia_frac=2./3 ):
         dia_dur = np.amax(self.t)-self.t_DN
         dia_range = self.t>=self.t_DN
         fit_range = self.t>=(self.t_DN+(1-dia_frac)*dia_dur)
 
-        t_fit = self.t[fit_range]-self.t_DN
+        t_fit = self.t[fit_range]
         P_fit = self.p0[fit_range]
 
         a0 = 0.01
@@ -134,17 +141,20 @@ class Pulse:
 
         is_sys = self.t<self.t_DN
 
-        t_sys = self.t[is_sys]-np.amin(self.t)
+        t_sys = self.t[is_sys]
         P_sys = self.p0[is_sys]
-        t_dia = self.t[~is_sys]-self.t_DN
+        t_dia = self.t[~is_sys]
         P_dia = self.p0[~is_sys]
 
         #Pres_sys = np.exp(-(a+b)*t_sys)*( a*np.cumsum(P_sys*np.exp((a+b)*t_sys))/fs + P_sys[0] )
-        Pres_sys = np.array([np.exp(-(a+b)*t_sys[i+1])*( a*np.trapz(P_sys[1:i+1]*np.exp((a+b)*t_sys[1:i+1]),t_sys[1:i+1] ) + P_sys[0] ) for i in range(len(P_sys)-1)])
-        Pres_sys = np.hstack([P_sys[0], Pres_sys])
-        Pres_dia = self.Pres_tDN(a, b)*np.exp(-b*t_dia)
+        #Pres_sys = np.array([np.exp(-(a+b)*t_sys[i+1])*( a*np.trapz(P_sys[1:i+1]*np.exp((a+b)*t_sys[1:i+1]),t_sys[1:i+1] ) + P_sys[0] ) for i in range(len(P_sys)-1)])
+        #Pres_sys = np.array([np.exp(-(a+b)*t_sys[i])*( a*np.trapz(P_sys[:i]*np.exp((a+b)*t_sys[:i]),t_sys[:i] ) + P_sys[0] ) for i in range(len(P_sys))])
+        #Pres_sys = np.hstack([P_sys[0], Pres_sys])
+        Pres_sys_eval = np.array([self.Pres_sys( t, a, b ) for t in t_sys])
+        #Pres_dia = self.Pres_sys( self.t_DN, a, b)*np.exp(-b*t_dia)
+        Pres_dia = self.decay_history( t_dia, a, b )
 
-        return np.hstack( [Pres_sys, Pres_dia] )
+        return np.hstack( [Pres_sys_eval, Pres_dia] )
 
 class Experiment:
 
